@@ -19,4 +19,42 @@ export default defineConfig({
 
   // File types to support raw imports. Never add .css, .tsx, or .ts files to this.
   assetsInclude: ['**/*.svg', '**/*.csv'],
+
+  // Optimize dependencies - include problematic ones
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: 'globalThis',
+      },
+    },
+    include: ['@perawallet/connect'],
+  },
+
+  // Server config for development
+  server: {
+    fs: {
+      allow: ['.']
+    }
+  },
+
+  // Define global variables for the build
+  define: {
+    global: 'globalThis',
+    'process.env': '({})',
+    'process.platform': '("browser")',
+    'process.version': '("")',
+  },
+
+  // Build config
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
+    },
+    commonjsOptions: {
+      include: [/node_modules/],
+      transformMixedEsModules: true,
+    },
+  },
 })

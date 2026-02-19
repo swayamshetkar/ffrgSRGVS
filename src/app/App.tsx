@@ -13,6 +13,7 @@ import Analytics from './pages/Analytics';
 import Settlements from './pages/Settlements';
 import BannerRevenue from './pages/BannerRevenue';
 import MyVideos from './pages/MyVideos';
+import AuthDiagnostic from './pages/AuthDiagnostic';
 
 // Layouts
 import DashboardLayout from './layouts/DashboardLayout';
@@ -23,6 +24,9 @@ const App = () => {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<LandingPage />} />
+          
+          {/* Diagnostic pages */}
+          <Route path="/auth-test" element={<AuthDiagnostic />} />
           
           <Route path="/app" element={<DashboardLayout />}>
             <Route index element={<Navigate to="/app/feed" replace />} />
