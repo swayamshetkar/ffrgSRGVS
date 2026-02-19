@@ -45,7 +45,7 @@ const LandingPage = () => {
     const initPeraWallet = async () => {
       try {
         peraWalletRef.current = getPeaWallet();
-        
+
         // Try to reconnect if user was previously connected
         const accounts = await peraWalletRef.current?.reconnectSession();
         if (accounts && accounts.length > 0) {
@@ -72,7 +72,7 @@ const LandingPage = () => {
       peraWalletRef.current = pera;
 
       const accounts = await pera.connect();
-      
+
       if (accounts && accounts.length > 0) {
         setWalletAddress(accounts[0]);
         toast.success(`Wallet connected: ${accounts[0].slice(0, 10)}...`);
@@ -149,8 +149,11 @@ const LandingPage = () => {
           signerAddress,
         });
         const signature = normalizeSignature(signatureRaw);
-        console.log('Signature received:', signature.substring(0, 20) + '...');
-        return signature;
+        // Double base64 encode: backend _decode_signature() decodes once, then
+        // algosdk.util.verify_bytes() decodes again, so we must encode twice.
+        const doubleEncoded = btoa(signature);
+        console.log('Signature (double-encoded):', doubleEncoded.substring(0, 20) + '...');
+        return doubleEncoded;
       }
 
       // Try alternative: signData method
@@ -162,21 +165,26 @@ const LandingPage = () => {
           signerAddress
         );
         const signature = normalizeSignature(signatureRaw);
-        console.log('Signature received:', signature.substring(0, 20) + '...');
-        return signature;
+        // Double base64 encode: backend _decode_signature() decodes once, then
+        // algosdk.util.verify_bytes() decodes again, so we must encode twice.
+        const doubleEncoded = btoa(signature);
+        console.log('Signature (double-encoded):', doubleEncoded.substring(0, 20) + '...');
+        return doubleEncoded;
       }
 
       throw new Error('PeraWallet signing methods not available');
-      
+
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Failed to sign message';
       console.error('Wallet signing error:', errorMsg, error);
-      
+
       const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
       if (isDev) {
         const devSignature = generateDevSignature(message, walletAddress);
-        console.warn('Using dev signature as fallback:', devSignature.substring(0, 20) + '...');
-        return devSignature;
+        // Double base64 encode for dev fallback too
+        const doubleEncoded = btoa(devSignature);
+        console.warn('Using dev signature as fallback (double-encoded):', doubleEncoded.substring(0, 20) + '...');
+        return doubleEncoded;
       }
       throw new Error(errorMsg);
     }
@@ -186,7 +194,7 @@ const LandingPage = () => {
   const generateDevSignature = (message: string, walletAddress: string): string => {
     // For development: create a signature-like string that includes message hash
     // This allows the backend to at least log what was signed
-    
+
     // Create a simple hash of the message
     let hash = 0;
     for (let i = 0; i < message.length; i++) {
@@ -194,13 +202,13 @@ const LandingPage = () => {
       hash = ((hash << 5) - hash) + char;
       hash = hash & hash; // Convert to 32bit integer
     }
-    
+
     // Create signature-like format: hash + wallet address + random
     // This is NOT a valid Algorand signature but helps with debugging
     const hashPart = Math.abs(hash).toString(16).padEnd(10, '0');
     const addrPart = walletAddress.substring(0, 10);
     const randomPart = Math.random().toString(36).substring(2, 15);
-    
+
     // Combine and encode as base64-like string
     const sigData = `${hashPart}${addrPart}${randomPart}`;
     try {
@@ -311,7 +319,7 @@ const LandingPage = () => {
               <a href="#docs" className="hover:text-white transition-colors">Docs</a>
             </div>
             <div className="flex items-center gap-4">
-              <button 
+              <button
                 onClick={isConnected ? () => navigate('/app') : handleConnect}
                 className="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-full font-medium transition-all shadow-lg shadow-indigo-500/20 text-sm flex items-center gap-2"
               >
@@ -351,18 +359,18 @@ const LandingPage = () => {
               Decentralized Creator <br /> Monetization
             </h1>
             <p className="text-lg md:text-xl text-slate-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-              Experience the future of video streaming. Transparent ad settlements, 
+              Experience the future of video streaming. Transparent ad settlements,
               direct creator payments, and censorship-resistant storage powered by Web3.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <button 
+              <button
                 onClick={handleConnect}
                 className="w-full sm:w-auto px-8 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-medium transition-all shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2"
               >
                 <Wallet className="w-5 h-5" />
                 Connect Wallet
               </button>
-              <Link 
+              <Link
                 to="/app"
                 className="w-full sm:w-auto px-8 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-medium transition-all border border-slate-700 flex items-center justify-center gap-2"
               >
@@ -379,7 +387,7 @@ const LandingPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-3 gap-8">
             {features.map((feature, idx) => (
-              <motion.div 
+              <motion.div
                 key={idx}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
@@ -411,7 +419,7 @@ const LandingPage = () => {
           <div className="relative">
             {/* Connecting Line (Desktop) */}
             <div className="hidden md:block absolute top-1/2 left-0 w-full h-0.5 bg-slate-800 -translate-y-1/2 z-0" />
-            
+
             <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10">
               {steps.map((step, idx) => (
                 <div key={idx} className="flex flex-col items-center text-center">
