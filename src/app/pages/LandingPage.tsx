@@ -124,9 +124,19 @@ const LandingPage = () => {
     }
 
     try {
+      let signerAddress = walletAddress;
+      if (!signerAddress) {
+        const accounts = await peraWalletRef.current.reconnectSession();
+        if (accounts && accounts.length > 0) {
+          signerAddress = accounts[0];
+          setWalletAddress(accounts[0]);
+        } else {
+          throw new Error('Wallet not connected');
+        }
+      }
       // Log for debugging
       console.log('Signing message:', message);
-      console.log('Wallet address:', walletAddress);
+      console.log('Wallet address:', signerAddress);
 
       // Encode the message to bytes (IMPORTANT: Must be UTF-8)
       const messageBytes = new TextEncoder().encode(message);
@@ -136,7 +146,7 @@ const LandingPage = () => {
         console.log('Using PeraWallet.signMessage()');
         const signatureRaw = await (peraWalletRef.current as any).signMessage({
           message: messageBytes,
-          signerAddress: walletAddress,
+          signerAddress,
         });
         const signature = normalizeSignature(signatureRaw);
         console.log('Signature received:', signature.substring(0, 20) + '...');
@@ -147,17 +157,10 @@ const LandingPage = () => {
       if (typeof (peraWalletRef.current as any).signData === 'function') {
         console.log('Using PeraWallet.signData()');
         let signatureRaw: unknown;
-        try {
-          signatureRaw = await (peraWalletRef.current as any).signData([
-            { data: messageBytes, message, signerAddress: walletAddress }
-          ]);
-        } catch {
-          // Alternate signature for older API
-          signatureRaw = await (peraWalletRef.current as any).signData(
-            [{ data: messageBytes, message }],
-            walletAddress
-          );
-        }
+        signatureRaw = await (peraWalletRef.current as any).signData(
+          [{ data: messageBytes, message }],
+          signerAddress
+        );
         const signature = normalizeSignature(signatureRaw);
         console.log('Signature received:', signature.substring(0, 20) + '...');
         return signature;

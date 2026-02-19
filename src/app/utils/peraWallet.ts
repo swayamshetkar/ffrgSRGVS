@@ -141,17 +141,10 @@ export const signMessageWithPeraWallet = async (
       signature = normalizeSignature(signatureRaw);
     } else if (typeof (pera as any).signData === 'function') {
       // Alternative: use signData method (expects an array)
-      let signatureRaw: unknown;
-      try {
-        signatureRaw = await (pera as any).signData([
-          { data: encodedMessage, message, signerAddress: walletAddress }
-        ]);
-      } catch {
-        signatureRaw = await (pera as any).signData(
-          [{ data: encodedMessage, message }],
-          walletAddress
-        );
-      }
+      const signatureRaw: unknown = await (pera as any).signData(
+        [{ data: encodedMessage, message }],
+        walletAddress
+      );
       signature = normalizeSignature(signatureRaw);
     } else {
       // Fallback: use custom message signing logic
