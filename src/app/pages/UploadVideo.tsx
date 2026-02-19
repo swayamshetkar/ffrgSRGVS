@@ -81,7 +81,7 @@ const UploadVideo = () => {
 
         xhr.addEventListener('error', () => reject(new Error('Upload failed')));
 
-        const baseUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000';
+        const baseUrl = (import.meta as any).env.VITE_API_BASE_URL || 'http://localhost:8000';
         xhr.open('POST', `${baseUrl}/videos/upload`);
 
         const token = localStorage.getItem('access_token');
