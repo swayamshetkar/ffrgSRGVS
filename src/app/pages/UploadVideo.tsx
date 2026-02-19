@@ -3,6 +3,7 @@ import { UploadCloud, X, CheckCircle, FileVideo, AlertCircle } from 'lucide-reac
 import { motion, AnimatePresence } from 'motion/react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { apiClient } from '../../services/api';
 
 const UploadVideo = () => {
   const navigate = useNavigate();
@@ -40,7 +41,7 @@ const UploadVideo = () => {
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!file || !title) {
       toast.error("Please provide a file and title");
@@ -48,19 +49,59 @@ const UploadVideo = () => {
     }
 
     setUploading(true);
-    // Simulate upload
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setUploading(false);
-          toast.success("Video uploaded successfully to IPFS!");
-          setTimeout(() => navigate('/app/feed'), 1000);
-          return 100;
+    setProgress(0);
+
+    try {
+      const formData = new FormData();
+      formData.append('title', title);
+      formData.append('description', description);
+      formData.append('file', file);
+
+      // Use XMLHttpRequest for progress tracking
+      const xhr = new XMLHttpRequest();
+      const result = await new Promise<any>((resolve, reject) => {
+        xhr.upload.addEventListener('progress', (event) => {
+          if (event.lengthComputable) {
+            const pct = Math.round((event.loaded / event.total) * 100);
+            setProgress(pct);
+          }
+        });
+
+        xhr.addEventListener('load', () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            try {
+              resolve(JSON.parse(xhr.responseText));
+            } catch {
+              resolve({});
+            }
+          } else {
+            reject(new Error(`Upload failed: HTTP ${xhr.status}`));
+          }
+        });
+
+        xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+
+        const baseUrl = (import.meta as any).env.VITE_API_URL || 'http://localhost:8000';
+        xhr.open('POST', `${baseUrl}/videos/upload`);
+
+        const token = localStorage.getItem('access_token');
+        if (token) {
+          xhr.setRequestHeader('Authorization', `Bearer ${token}`);
         }
-        return prev + 5;
+
+        xhr.send(formData);
       });
-    }, 200);
+
+      setProgress(100);
+      toast.success("Video uploaded successfully to IPFS!");
+      setTimeout(() => navigate('/app/feed'), 1000);
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : 'Upload failed';
+      toast.error(msg);
+      console.error('Upload error:', error);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
@@ -74,27 +115,26 @@ const UploadVideo = () => {
 
       <div className="bg-slate-800 rounded-2xl border border-slate-700 p-8 shadow-xl">
         <form onSubmit={handleSubmit} className="space-y-8">
-          
+
           {/* File Upload Area */}
-          <div 
-            className={`relative border-2 border-dashed rounded-xl p-10 text-center transition-all ${
-              dragActive ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-600 hover:border-indigo-400 hover:bg-slate-700/50'
-            }`}
+          <div
+            className={`relative border-2 border-dashed rounded-xl p-10 text-center transition-all ${dragActive ? 'border-indigo-500 bg-indigo-500/10' : 'border-slate-600 hover:border-indigo-400 hover:bg-slate-700/50'
+              }`}
             onDragEnter={handleDrag}
             onDragLeave={handleDrag}
             onDragOver={handleDrag}
             onDrop={handleDrop}
           >
-            <input 
-              type="file" 
-              accept="video/*" 
+            <input
+              type="file"
+              accept="video/*"
               onChange={handleChange}
               className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
             />
-            
+
             <AnimatePresence mode="wait">
               {file ? (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0, scale: 0.9 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.9 }}
@@ -105,7 +145,7 @@ const UploadVideo = () => {
                   </div>
                   <h3 className="text-lg font-medium text-white mb-1">{file.name}</h3>
                   <p className="text-sm text-slate-400">{(file.size / (1024 * 1024)).toFixed(2)} MB</p>
-                  <button 
+                  <button
                     type="button"
                     onClick={(e) => {
                       e.preventDefault();
@@ -117,7 +157,7 @@ const UploadVideo = () => {
                   </button>
                 </motion.div>
               ) : (
-                <motion.div 
+                <motion.div
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
@@ -140,8 +180,8 @@ const UploadVideo = () => {
           <div className="space-y-6">
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">Title</label>
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="w-full px-4 py-3 bg-slate-900 border border-slate-700 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
@@ -151,7 +191,7 @@ const UploadVideo = () => {
 
             <div>
               <label className="block text-sm font-medium text-slate-300 mb-2">Description</label>
-              <textarea 
+              <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 rows={4}
@@ -185,7 +225,7 @@ const UploadVideo = () => {
                 <span className="text-indigo-400">{progress}%</span>
               </div>
               <div className="h-2 bg-slate-700 rounded-full overflow-hidden">
-                <motion.div 
+                <motion.div
                   className="h-full bg-indigo-500"
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
@@ -194,7 +234,7 @@ const UploadVideo = () => {
               {progress === 100 && (
                 <div className="mt-2 text-xs text-emerald-400 flex items-center gap-1">
                   <CheckCircle className="w-3 h-3" />
-                  CID: QmX7...9s2
+                  Upload complete!
                 </div>
               )}
             </div>
@@ -202,19 +242,18 @@ const UploadVideo = () => {
 
           {/* Action Buttons */}
           <div className="flex justify-end gap-4 pt-4 border-t border-slate-700">
-            <button 
-              type="button" 
+            <button
+              type="button"
               onClick={() => navigate(-1)}
               className="px-6 py-2 text-slate-400 hover:text-white font-medium transition-colors"
             >
               Cancel
             </button>
-            <button 
-              type="submit" 
+            <button
+              type="submit"
               disabled={uploading || !file || !title}
-              className={`px-8 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-all shadow-lg shadow-indigo-500/20 flex items-center gap-2 ${
-                (uploading || !file || !title) ? 'opacity-50 cursor-not-allowed' : ''
-              }`}
+              className={`px-8 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-all shadow-lg shadow-indigo-500/20 flex items-center gap-2 ${(uploading || !file || !title) ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
             >
               {uploading ? 'Uploading...' : 'Publish Video'}
             </button>
