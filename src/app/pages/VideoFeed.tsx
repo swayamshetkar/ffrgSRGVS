@@ -99,9 +99,9 @@ const VideoFeed = () => {
             >
               {/* Thumbnail */}
               <div className="relative aspect-video bg-slate-700 overflow-hidden">
-                {video.thumbnail_url || video.ipfs_hash ? (
+                {video.thumbnail_url || video.cid ? (
                   <img
-                    src={video.thumbnail_url || `https://ipfs.io/ipfs/${video.ipfs_hash}`}
+                    src={video.thumbnail_url || `https://ipfs.io/ipfs/${video.cid}`}
                     alt={video.title}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
@@ -132,16 +132,16 @@ const VideoFeed = () => {
                 <div className="flex gap-3">
                   <div className="flex-shrink-0">
                     <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center text-sm font-bold text-slate-300 border border-slate-600">
-                      {(video.creator_name || 'U').substring(0, 2).toUpperCase()}
+                      {(video.users?.username || 'U').substring(0, 2).toUpperCase()}
                     </div>
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="text-white font-medium line-clamp-2 leading-tight mb-1 group-hover:text-indigo-400 transition-colors">
                       {video.title}
                     </h3>
-                    <p className="text-sm text-slate-400 mb-1">{video.creator_name || 'Unknown'}</p>
+                    <p className="text-sm text-slate-400 mb-1">{video.users?.username || 'Unknown'}</p>
                     <div className="flex items-center text-xs text-slate-500">
-                      <span>{formatViews(video.views || 0)} views</span>
+                      <span>{formatViews(video.total_views || 0)} views</span>
                       <span className="mx-1">•</span>
                       <span>{formatDate(video.created_at)}</span>
                     </div>

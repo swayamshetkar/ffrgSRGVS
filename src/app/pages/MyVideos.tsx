@@ -100,9 +100,9 @@ const MyVideos = () => {
                     <td className="px-6 py-4">
                       <div className="flex gap-4 items-center">
                         <div className="w-24 h-16 bg-slate-700 rounded-lg overflow-hidden flex-shrink-0 relative">
-                          {(video.thumbnail_url || video.ipfs_hash) ? (
+                          {(video.thumbnail_url || video.cid) ? (
                             <img
-                              src={video.thumbnail_url || `https://ipfs.io/ipfs/${video.ipfs_hash}`}
+                              src={video.thumbnail_url || `https://ipfs.io/ipfs/${video.cid}`}
                               alt={video.title}
                               className="w-full h-full object-cover"
                             />
@@ -113,9 +113,9 @@ const MyVideos = () => {
                         <div className="min-w-0">
                           <h4 className="text-white font-medium line-clamp-1 mb-1 group-hover:text-indigo-400 transition-colors">{video.title}</h4>
                           <div className="flex items-center gap-2 text-xs text-slate-500 font-mono">
-                            {video.ipfs_hash && (
+                            {video.cid && (
                               <>
-                                <span className="truncate max-w-[100px]">{video.ipfs_hash.substring(0, 10)}...</span>
+                                <span className="truncate max-w-[100px]">{video.cid.substring(0, 10)}...</span>
                                 <ExternalLink className="w-3 h-3 hover:text-indigo-400 cursor-pointer" />
                               </>
                             )}
@@ -135,7 +135,7 @@ const MyVideos = () => {
                       <div className="flex items-center gap-4 text-slate-300">
                         <div className="flex items-center gap-1" title="Views">
                           <Eye className="w-4 h-4 text-slate-500" />
-                          <span>{(video.views || 0).toLocaleString()}</span>
+                          <span>{(video.total_views || 0).toLocaleString()}</span>
                         </div>
                         <div className="flex items-center gap-1" title="Likes">
                           <ThumbsUp className="w-4 h-4 text-slate-500" />

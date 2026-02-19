@@ -146,9 +146,9 @@ const VideoPlayer = () => {
         <div className="relative aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl mb-4 group">
           {/* Video Content */}
           <div className="absolute inset-0 bg-slate-800 flex items-center justify-center">
-            {video.ipfs_hash ? (
+            {video.cid ? (
               <video
-                src={`https://ipfs.io/ipfs/${video.ipfs_hash}`}
+                src={`https://ipfs.io/ipfs/${video.cid}`}
                 className="w-full h-full object-cover"
                 controls={!isAdPlaying}
                 onPlay={() => setIsPlaying(true)}
@@ -209,7 +209,7 @@ const VideoPlayer = () => {
           <h1 className="text-2xl font-bold text-white mb-2">{video.title}</h1>
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div className="flex items-center gap-4 text-slate-400 text-sm">
-              <span>{formatViews(video.views)} views</span>
+              <span>{formatViews(video.total_views)} views</span>
               <span>•</span>
               <span>{formatDate(video.created_at)}</span>
               <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded border border-emerald-500/20 text-xs font-bold flex items-center gap-1">
@@ -239,11 +239,11 @@ const VideoPlayer = () => {
         <div className="flex items-center justify-between p-4 bg-slate-800/50 rounded-xl border border-slate-700 mb-6 backdrop-blur-sm">
           <div className="flex items-center gap-3">
             <div className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center font-bold text-white text-lg">
-              {(video.creator_name || 'U').substring(0, 2).toUpperCase()}
+              {(video.users?.username || 'U').substring(0, 2).toUpperCase()}
             </div>
             <div>
               <h3 className="font-bold text-white flex items-center gap-1">
-                {video.creator_name || 'Unknown Creator'}
+                {video.users?.username || 'Unknown Creator'}
                 <UserCheck className="w-4 h-4 text-blue-400 fill-current" />
               </h3>
               <p className="text-sm text-slate-400">{formatViews(video.subscribers || 0)} subscribers</p>
@@ -290,9 +290,9 @@ const VideoPlayer = () => {
               }}
             >
               <div className="relative w-40 h-24 bg-slate-700 rounded-lg overflow-hidden flex-shrink-0">
-                {item.thumbnail_url || item.ipfs_hash ? (
+                {item.thumbnail_url || item.cid ? (
                   <img
-                    src={item.thumbnail_url || `https://ipfs.io/ipfs/${item.ipfs_hash}`}
+                    src={item.thumbnail_url || `https://ipfs.io/ipfs/${item.cid}`}
                     className="w-full h-full object-cover"
                     alt={item.title}
                   />
@@ -306,9 +306,9 @@ const VideoPlayer = () => {
                 <h4 className="font-medium text-sm text-white line-clamp-2 group-hover:text-indigo-400 transition-colors">
                   {item.title}
                 </h4>
-                <p className="text-xs text-slate-400">{item.creator_name || 'Unknown'}</p>
+                <p className="text-xs text-slate-400">{item.users?.username || 'Unknown'}</p>
                 <div className="flex items-center gap-1 text-[10px] text-slate-500">
-                  <span>{formatViews(item.views || 0)} views</span>
+                  <span>{formatViews(item.total_views || 0)} views</span>
                 </div>
               </div>
             </div>

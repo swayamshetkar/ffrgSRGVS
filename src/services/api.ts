@@ -242,7 +242,9 @@ class APIClient {
     });
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      throw new Error(data.detail || `HTTP ${response.status}`);
+      const detail = data.detail;
+      const msg = typeof detail === 'string' ? detail : detail ? JSON.stringify(detail) : `HTTP ${response.status}`;
+      throw new Error(msg);
     }
     return response.json();
   }
@@ -282,7 +284,9 @@ class APIClient {
     });
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
-      throw new Error(data.detail || `HTTP ${response.status}`);
+      const detail = data.detail;
+      const msg = typeof detail === 'string' ? detail : detail ? JSON.stringify(detail) : `HTTP ${response.status}`;
+      throw new Error(msg);
     }
     return response.json();
   }
@@ -324,7 +328,12 @@ class APIClient {
       method: 'POST',
       headers: this.getAuthHeader(),
     });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      const detail = data.detail;
+      const msg = typeof detail === 'string' ? detail : detail ? JSON.stringify(detail) : `HTTP ${response.status}`;
+      throw new Error(msg);
+    }
     return response.json();
   }
 
@@ -333,7 +342,12 @@ class APIClient {
       method: 'POST',
       headers: this.getAuthHeader(),
     });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      const detail = data.detail;
+      const msg = typeof detail === 'string' ? detail : detail ? JSON.stringify(detail) : `HTTP ${response.status}`;
+      throw new Error(msg);
+    }
     return response.json();
   }
 

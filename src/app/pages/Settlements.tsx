@@ -45,7 +45,8 @@ const Settlements = () => {
       toast.success(`${type === 'video' ? 'Video' : 'Banner'} settlement triggered!`);
       fetchData(false);
     } catch (error) {
-      toast.error(`Failed to trigger ${type} settlement`);
+      const msg = error instanceof Error ? error.message : 'Unknown error';
+      toast.error(`Failed to trigger ${type} settlement: ${msg}`);
     } finally {
       setTriggering(null);
     }
