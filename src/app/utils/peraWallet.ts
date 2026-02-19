@@ -76,6 +76,24 @@ function toBase64(str: string): string {
   }
 }
 
+function toBase64FromBytes(bytes: Uint8Array): string {
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+function normalizeSignature(sig: unknown): string {
+  if (typeof sig === 'string') return sig;
+  if (sig instanceof Uint8Array) return toBase64FromBytes(sig);
+  if (Array.isArray(sig) && sig.length > 0) return normalizeSignature(sig[0]);
+  if (sig && typeof sig === 'object' && 'signature' in (sig as any)) {
+    return normalizeSignature((sig as any).signature);
+  }
+  throw new Error('Unsupported signature format returned by wallet');
+}
+
 /**
  * Sign a message with the connected wallet
  * PeraWallet uses a different approach for message signing
@@ -109,16 +127,32 @@ export const signMessageWithPeraWallet = async (
 
     if (walletMethods === 'signMessage' && typeof (pera as any).signMessage === 'function') {
       // If signMessage exists, use it
-      signature = await (pera as any).signMessage({
+      const signatureRaw = await (pera as any).signMessage({
         message: encodedMessage,
         signerAddress: walletAddress,
       });
+      signature = normalizeSignature(signatureRaw);
     } else if (walletMethods === 'sign' && typeof (pera as any).sign === 'function') {
       // Alternative: use sign method
-      signature = await (pera as any).sign({
+      const signatureRaw = await (pera as any).sign({
         message: encodedMessage,
         signerAddress: walletAddress,
       });
+      signature = normalizeSignature(signatureRaw);
+    } else if (typeof (pera as any).signData === 'function') {
+      // Alternative: use signData method (expects an array)
+      let signatureRaw: unknown;
+      try {
+        signatureRaw = await (pera as any).signData([
+          { data: encodedMessage, message, signerAddress: walletAddress }
+        ]);
+      } catch {
+        signatureRaw = await (pera as any).signData(
+          [{ data: encodedMessage, message }],
+          walletAddress
+        );
+      }
+      signature = normalizeSignature(signatureRaw);
     } else {
       // Fallback: use custom message signing logic
       // In real scenario, this would be handled by your backend
@@ -141,7 +175,7 @@ export const signMessageWithPeraWallet = async (
     console.error('Message signing error:', error);
     
     // Return a mock signature for development
-    const isDev = typeof window !== 'undefined' && (window as any).__DEV__;
+    const isDev = typeof import.meta !== 'undefined' && (import.meta as any).env?.DEV;
     if (isDev) {
       console.warn('Using mock signature for development');
       return toBase64(`mock_signature_${walletAddress}`);

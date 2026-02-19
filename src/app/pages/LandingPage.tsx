@@ -100,6 +100,24 @@ const LandingPage = () => {
     }
   };
 
+  const toBase64FromBytes = (bytes: Uint8Array): string => {
+    let binary = '';
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  };
+
+  const normalizeSignature = (sig: unknown): string => {
+    if (typeof sig === 'string') return sig;
+    if (sig instanceof Uint8Array) return toBase64FromBytes(sig);
+    if (Array.isArray(sig) && sig.length > 0) return normalizeSignature(sig[0]);
+    if (sig && typeof sig === 'object' && 'signature' in (sig as any)) {
+      return normalizeSignature((sig as any).signature);
+    }
+    throw new Error('Unsupported signature format returned by wallet');
+  };
+
   const handleWalletSign = async (message: string): Promise<string> => {
     if (!peraWalletRef.current) {
       throw new Error('Wallet not initialized');
@@ -116,10 +134,11 @@ const LandingPage = () => {
       // Try the signMessage method if it exists (PeraWallet 1.4+)
       if (typeof (peraWalletRef.current as any).signMessage === 'function') {
         console.log('Using PeraWallet.signMessage()');
-        const signature = await (peraWalletRef.current as any).signMessage({
+        const signatureRaw = await (peraWalletRef.current as any).signMessage({
           message: messageBytes,
           signerAddress: walletAddress,
         });
+        const signature = normalizeSignature(signatureRaw);
         console.log('Signature received:', signature.substring(0, 20) + '...');
         return signature;
       }
@@ -127,31 +146,36 @@ const LandingPage = () => {
       // Try alternative: signData method
       if (typeof (peraWalletRef.current as any).signData === 'function') {
         console.log('Using PeraWallet.signData()');
-        const signature = await (peraWalletRef.current as any).signData({
-          data: messageBytes,
-          signerAddress: walletAddress,
-        });
+        let signatureRaw: unknown;
+        try {
+          signatureRaw = await (peraWalletRef.current as any).signData([
+            { data: messageBytes, message, signerAddress: walletAddress }
+          ]);
+        } catch {
+          // Alternate signature for older API
+          signatureRaw = await (peraWalletRef.current as any).signData(
+            [{ data: messageBytes, message }],
+            walletAddress
+          );
+        }
+        const signature = normalizeSignature(signatureRaw);
         console.log('Signature received:', signature.substring(0, 20) + '...');
         return signature;
       }
 
-      // Fallback for development - this allows testing without PeraWallet
-      console.warn('PeraWallet signing methods not available - using development mock');
-      
-      // Generate a development-only signature that the backend can recognize
-      // Backend should skip verification for this pattern in dev mode
-      const devSignature = generateDevSignature(message, walletAddress);
-      console.log('Dev signature generated:', devSignature.substring(0, 20) + '...');
-      return devSignature;
+      throw new Error('PeraWallet signing methods not available');
       
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Failed to sign message';
       console.error('Wallet signing error:', errorMsg, error);
       
-      // Fall back to dev signature
-      const devSignature = generateDevSignature(message, walletAddress);
-      console.warn('Using dev signature as fallback:', devSignature.substring(0, 20) + '...');
-      return devSignature;
+      const isDev = typeof import.meta !== 'undefined' && import.meta.env?.DEV;
+      if (isDev) {
+        const devSignature = generateDevSignature(message, walletAddress);
+        console.warn('Using dev signature as fallback:', devSignature.substring(0, 20) + '...');
+        return devSignature;
+      }
+      throw new Error(errorMsg);
     }
   };
 
