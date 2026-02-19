@@ -40,9 +40,9 @@ export default defineConfig({
   // Define global variables for the build
   define: {
     global: 'globalThis',
-    'process.env': '({})',
-    'process.platform': '("browser")',
-    'process.version': '("")',
+    'process.env': '{}',
+    'process.platform': '"browser"',
+    'process.version': '""',
   },
 
   // Build config
