@@ -3,6 +3,13 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { WalletProvider } from './context/WalletContext';
 
+// Layouts & UI
+import DashboardLayout from './layouts/DashboardLayout';
+import SmoothScroll from '../components/layout/SmoothScroll';
+import AnimatedBackground from '../components/ui/AnimatedBackground';
+import CustomCursor from '../components/ui/CustomCursor';
+// import ThreeScene from './components/ui/ThreeScene'; // Importing dynamically or conditionally if needed
+
 // Pages
 import LandingPage from './pages/LandingPage';
 import VideoFeed from './pages/VideoFeed';
@@ -15,35 +22,38 @@ import BannerRevenue from './pages/BannerRevenue';
 import MyVideos from './pages/MyVideos';
 import AuthDiagnostic from './pages/AuthDiagnostic';
 
-// Layouts
-import DashboardLayout from './layouts/DashboardLayout';
-
 const App = () => {
   return (
     <WalletProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          
-          {/* Diagnostic pages */}
-          <Route path="/auth-test" element={<AuthDiagnostic />} />
-          
-          <Route path="/app" element={<DashboardLayout />}>
-            <Route index element={<Navigate to="/app/feed" replace />} />
-            <Route path="feed" element={<VideoFeed />} />
-            <Route path="watch/:id" element={<VideoPlayer />} />
-            <Route path="upload" element={<UploadVideo />} />
-            <Route path="videos" element={<MyVideos />} />
-            <Route path="campaigns" element={<CreateCampaign />} />
-            <Route path="analytics" element={<Analytics />} />
-            <Route path="revenue" element={<BannerRevenue />} />
-            <Route path="settlements" element={<Settlements />} />
-          </Route>
+      <SmoothScroll>
+        <CustomCursor />
+        <AnimatedBackground />
+        {/* <ThreeScene />  - Can be enabled for specific pages or globally if optimized */}
 
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        <Toaster position="top-right" theme="dark" />
-      </BrowserRouter>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+
+            {/* Diagnostic pages */}
+            <Route path="/auth-test" element={<AuthDiagnostic />} />
+
+            <Route path="/app" element={<DashboardLayout />}>
+              <Route index element={<Navigate to="/app/feed" replace />} />
+              <Route path="feed" element={<VideoFeed />} />
+              <Route path="watch/:id" element={<VideoPlayer />} />
+              <Route path="upload" element={<UploadVideo />} />
+              <Route path="videos" element={<MyVideos />} />
+              <Route path="campaigns" element={<CreateCampaign />} />
+              <Route path="analytics" element={<Analytics />} />
+              <Route path="revenue" element={<BannerRevenue />} />
+              <Route path="settlements" element={<Settlements />} />
+            </Route>
+
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+          <Toaster position="top-right" theme="dark" />
+        </BrowserRouter>
+      </SmoothScroll>
     </WalletProvider>
   );
 };
